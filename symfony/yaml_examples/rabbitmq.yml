@@ -1,0 +1,61 @@
+services:
+    #
+    # Consumers
+    #
+    rabbitmq_abstract_consumer:
+        class: RabbitMq\Consumer\AbstractConsumer
+        abstract: true
+        arguments:
+            - "@doctrine.orm.entity_manager"
+            - "@config_loader"
+            - "@old_sound_rabbit_mq.x_dead_letter_producer"
+            - "@monolog.logger.queue"
+            - "@stats_collector"
+
+    outgoing_email_consumer:
+        parent: rabbitmq_abstract_consumer
+        class: RabbitMq\Consumer\OutgoingEmailConsumer
+        calls:
+            - [setEmailService, ["@email_service"]]
+            - [setProducer, ["@old_sound_rabbit_mq.outgoing_email_producer"]]
+        tags:
+            - { name: rabbit_mq_producer, producer: outgoing_email }
+
+    elasticsearch_consumer:
+        parent: rabbitmq_abstract_consumer
+        class: RabbitMq\Consumer\ElasticsearchConsumer
+        calls:
+            - [setSearchClient, ["@search_client"]]
+            - [setProducer, ["@old_sound_rabbit_mq.elasticsearch_producer"]]
+        tags:
+            - { name: rabbit_mq_producer, producer: elasticsearch }
+
+
+    #
+    # RPC Servers
+    #
+    rabbitmq_abstract_rpc_server:
+        class: RabbitMq\RpcServer\AbstractRpcServer
+        abstract: true
+        arguments:
+            - "@doctrine.orm.entity_manager"
+            - "@config_loader"
+            - "@monolog.logger.queue"
+
+    sabre_bfm_rpc:
+        parent: rabbitmq_abstract_rpc_server
+        class: RabbitMq\RpcServer\SabreBfmAirSearchRpcServer
+        calls:
+            - [setAirSearchAdapter, ["@sabre_bfm_air_search_adapter"]]
+
+    softrip_search_rpc:
+        parent: rabbitmq_abstract_rpc_server
+        class: RabbitMq\RpcServer\SoftripSearchRpcServer
+        calls:
+            - [setSoftripService, ["@softrip_service"]]
+
+    expedia_search_rpc:
+        parent: rabbitmq_abstract_rpc_server
+        class: RabbitMq\RpcServer\ExpediaSearchRpcServer
+        calls:
+            - [setExpediaSearchAdapter, ["@expedia_search_adapter"]]

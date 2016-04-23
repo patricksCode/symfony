@@ -1,0 +1,47 @@
+Entities\UserMessage:
+  type: entity
+  table: user_messages
+  manyToOne:
+    message:
+      targetEntity: Message
+      inversedBy: users
+      joinColumns:
+        messageId:
+          referencedColumnName: id
+    user:
+      targetEntity: User
+      inversedBy: messages
+      joinColumns:
+        userId:
+          referencedColumnName: id
+  indexes:
+    message_index:
+      columns:
+        - messageId
+    user_index:
+      columns:
+        - userId
+  fields:
+    id:
+      type: integer
+      id: true
+      generator:
+        strategy: AUTO
+    messageId:
+      type: integer
+      nullable: false
+    userId:
+      type: integer
+      nullable: false
+    action:
+      type: string
+      length: 50
+      nullable: false
+    viewed:
+      type: integer
+      nullable: false
+      options:
+        default: 0 
+    created:
+      type: datetime
+      nullable: false

@@ -1,0 +1,138 @@
+Entities\User:
+  type: entity
+  table: users
+  uniqueConstraints:
+    email_index:
+      columns:
+        - email
+    username_index:
+      columns:
+        - userName
+  indexes:
+    avatar_index:
+      columns:
+        - avatarId
+  manyToMany:
+    images:
+      targetEntity: Image
+      cascade:  [persist]
+      joinTable:
+        name: user_images
+        joinColumns:
+          user_id:
+            referencedColumnName: id
+        inverseJoinColumns:
+          image_id:
+            referencedColumnName: id
+            unique: true
+    locations:
+      targetEntity: Location
+      cascade:  [persist]
+      joinTable:
+        name: user_locations
+        joinColumns:
+          user_id:
+            referencedColumnName: id
+        inverseJoinColumns:
+          location_id:
+            referencedColumnName: id
+            unique: true
+  oneToMany:
+    friendOne:
+      targetEntity: Friend
+      mappedBy: UserOne
+    friendTwo:
+      targetEntity: Friend
+      mappedBy: UserTwo
+    wallPost:
+      targetEntity: Wallpost
+      mappedBy: user
+    wpcomment:
+      targetEntity: Wpcomment
+      mappedBy: user
+    oldPassword:
+      targetEntity: Password
+      mappedBy: user
+    siteKey:
+      targetEntity: Sitekey
+      mappedBy: user
+    messages:
+      targetEntity: UserMessage
+      mappedBy: user
+    items:
+      targetEntity: Item
+      mappedBy: user
+    closets:
+      targetEntity: Outfit
+      mappedBy: user
+  manyToOne:
+    avatar:
+      targetEntity: Image
+      joinColumn:
+        name: avatarId
+        referencedColumnName: id
+  fields:
+    id:
+      type: integer
+      id: true
+      generator:
+        strategy: AUTO
+    firstName:
+      type: string
+      length: 255
+      nullable: false
+    lastName:
+      type: string
+      length: 255
+      nullable: false
+    phoneNumber:
+      type: string
+      length: 14
+      nullable: true
+    avatarId:
+      type: integer
+      nullable: true
+    email:
+      type: string
+      length: 255
+      unique: true
+      nullable: false
+    zip:
+      type: string
+      length: 10
+      nullable: false
+    userName:
+      type: string
+      length: 30
+      unique: true
+      nullable: false
+    password:
+      type: string
+      length: 255
+      nullable: false  
+    gender:
+      type: string
+      length: 1   
+      nullable: true
+    loginCount:
+      type: integer 
+    created:
+      type: datetime
+      nullable: false
+    confirmationNumber:
+      type: string
+      length: 50
+      nullable: true
+    accessLvl:
+      type: integer 
+      nullable: false
+      options:
+        default: 0 
+    confirmed:
+      type: integer
+      options:
+        default: 0 
+    usedKey:
+      type: integer
+      options:
+        default: 0 

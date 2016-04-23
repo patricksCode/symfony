@@ -1,0 +1,177 @@
+{% extends "PAppBundle::layout.twig.html" %}
+
+{% block pagetitle %}{{ parent() }} - Search Results{% endblock %}
+
+{% block stylesheets %}
+<link href="{{ passet('assets/css/app_search_results.css') }}" rel="stylesheet" type="text/css" />
+{% endblock  %}
+
+{% block js %}
+<script type="text/javascript" src="{{ passet('assets/javascript/app_search_results.js') }}"></script>
+<script type="text/javascript">
+	var SearchResults = {
+		availableSubscriptionLabels: {{ availableSubscriptionLabels | json_encode | raw }}
+	};
+
+	var resultsLoader = {
+		nextOffset: {{ offset + limit }},
+		max: {{ totalItems }}
+	};
+
+	$('#subscriptionsContainer').subscription({
+		hasLabel: true,
+		subscribeUrl: {{ path('apiSubscriptionSearchAdd') | json_encode | raw }},
+		unsubscribeUrl: {{ path('apiSubscriptionSearchRemove') | json_encode | raw }},
+		onBeforeSubscribe: function () {
+			if ($('#subscriptionsLabel').val().replace(' ', '') == '') {
+				$('#subscriptionsErrorContainer').show();
+				return false;
+			}
+
+			$('#subscriptionsErrorContainer').hide();
+		}
+	});
+</script>
+{% endblock %}
+
+{% block subscriptionBox %}
+<div class="right" >	
+	<a id="subscriptions_dropBox" class="btn-subscriptions-view" href="#" title="Subscriptions"></a>
+	<div id="subscriptionsContainer" class="dropBox">
+		<blockquote>
+			<div class="dropBoxRow">
+				<div id="subscriptionsWindowClose" class="btn-icon-close"></div>
+				<div class="subscriptionsRemoveContainer" style="display:none;">
+					<span>Subscribed!</span>
+				</div>
+				<div class="subscriptionsAddContainer">
+					<input type="text" id="subscriptionsLabel" value="{% if searchTerm is defined %}{{ searchTerm }}{% endif %}" />
+					<input type="hidden" id="subscriptionsMeta" value="{{ subscriptionSearchReplayParams }}" /> 
+					<a class="subscriptionsAddLink" href="#" title="Subscribe" value="{{ subscriptionValue }}">Subscribe</a>
+				</div>
+						
+				
+			</div>
+			<ul id="searchList"></ul>
+			<div class="dropBoxRow center"><a href="{{ path('subscriptions') }}" title="View Subscriptions">View Subscriptions</a></div>
+				
+		</blockquote>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block header %}
+<div class="section-header">
+	<div class="header-content">
+		<a href="{{ path('homepage') }}"><img src="{{ passet('assets/images/Ag_icon_wht.png') }}" width="50" height="50" /></a>
+		<h2>Results for {{ searchTerm }}</h2>
+	</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="section-content">
+	<div id='resultsHeader'>
+		<p>
+		{% if totalItems > 0 %}
+			{{ offset+1 }} - <span class="resultsHigh">{{ totalItems < offset+limit ? totalItems : offset+limit }}</span> of
+			{% if totalItems > 1000 %}
+				 thousands 
+			{% elseif totalItems > 200 %}
+				 hundreds
+			{% else %}
+				{{ totalItems }} matches
+			{% endif %}			
+		{% else %}0 matches{% endif %} 
+		</p>
+		{% if listings|count > 0 %}
+			
+			{% if price  or ( priceRange.low is defined and priceRange.high is defined )%}
+				<p>|<span>Price:</span> <a id="priceFilterText">
+				{% if priceRange.low is defined and priceRange.high is defined %}
+					${{ priceRange.low|number_format }} - ${{ priceRange.high|number_format }}
+				{% else %}
+					${{ price|number_format }}
+				{% endif %} 
+
+				{% if priceUnits is defined %}
+					{% if priceUnits == 1 %}
+						per month
+					{% elseif priceUnits == 3 %}
+						per sqft
+					{% endif %}
+				{% endif %}
+				</a></p>
+			{% endif %}
+
+			{% if size or ( sizeRange.low is defined and sizeRange.high is defined )  %}
+				<p>|<span>Size:</span> <a id="sizeFilterText">
+				{% if sizeRange.low is defined and sizeRange.high is defined %}
+					{{ sizeRange.low|number_format }} - {{ sizeRange.high|number_format }}
+				{% else %}
+					{{ size|number_format }}
+				{% endif %}
+
+				 sqft</a></p>
+			{% endif %}
+
+
+
+			{% if sort %}
+			{% set sortOptions = {
+				'priceA':'Price: Low to High',
+				'priceD':'Price: High to Low',
+				'sfA':'Sqft: Least to Most',
+				'sfD':'Sqft: Most to Least'
+			} %}
+			<div class="sort">Sort by:
+				<select id="sortControl">
+				{% for currKey, currOption in sortOptions %}
+					<option value="{{ currKey }}" {% if sort == currKey %}selected='selected'{% endif %}>{{ currOption }}</option>
+				{% endfor %}
+				</select>
+			</div>
+			{% endif %}
+		{% endif %}		
+	</div>
+	<div id='resultsLineItems'>
+		{% include 'PAppBundle::Search/searchresults.table.twig.html'%}
+	</div>
+	<div class="loadingMessage">
+		{% if totalItems %}
+			Scouring the streets for your results... <div class="loadingIcon"></div>
+		{% else %}
+			No results found. 
+		{% endif %}
+	</div>
+	<div id="resultsFooter">
+		<div id="subFooter">
+			{% if totalItems > 0 %}
+				{{ offset+1 }} - <span class="resultsHigh">{{ totalItems < offset+limit ? totalItems : offset+limit }}</span> of
+				{% if totalItems > 1000 %}
+					 Thousands 
+				{% elseif totalItems > 200 %}
+					 Hundreds
+				{% else %}
+					{{ totalItems }} matches
+				{% endif %}			
+			{% else %}0 matches{% endif %} 		
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% include 'PAppBundle::Homepage/footer.twig.html'%}
+{% endblock %}
+{% block baseline %}
+<div id="errorDialog">
+	<div class="titleBar">
+		<h3>Error</h3>
+	</div>
+	<div class="error-txt">
+		<h3></h3>
+	</div>
+</div>
+{% endblock %}

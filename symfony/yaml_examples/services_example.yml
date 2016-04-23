@@ -1,0 +1,147 @@
+services:
+  redis_caching_service:
+    class: MainBundle\Search\Persistence\RedisCachingService
+    arguments:
+      - "@snc_redis.default"
+
+  search_processor:
+    class: MainBundle\Search\SearchProcessor
+    arguments:
+      - "@doctrine.orm.entity_manager"
+      - "@response_factory"
+      - "@content_service"
+      - "@feature_manager"
+      - "@softrip_search_executor"
+      - "@expedia_search_executor"
+      - "@logger"
+
+  expedia_search_adapter:
+    class: MainBundle\Search\Adapter\ExpediaSearchAdapter
+    arguments:
+      - "@expedia_service"
+      - "@doctrine.orm.entity_manager"
+      - "@redis_caching_service"
+      - "@content_service"
+      - "@response_factory"
+      - "@logger"
+      - "@?debug.stopwatch"
+
+  expedia_service_search_executor:
+    class: MainBundle\Search\SearchExecutor
+    arguments:
+      - "@expedia_search_adapter"
+
+  expedia_sabre_package_search_adapter:
+    class: MainBundle\Search\Package\Adapter\ExpediaSabreSearchAdapter
+    arguments:
+      - "@doctrine.orm.entity_manager"
+      - "@response_factory"
+      - "@expedia_search_adapter"
+      - "@sabre_bfm_air_search_adapter"
+      - "@old_sound_rabbit_mq.default_rpc"
+      - "@logger"
+      - "@?debug.stopwatch"
+
+  expedia_service:
+    class: MainBundle\Expedia\ExpediaService
+    arguments:
+      - "@request_stack"
+      - "@buzz_browser"
+      - "@expedia_monolog_listener"
+      - "@stats_collector"
+      - "%totom_main.expedia_config%"
+      - "%expedia_credentials%"
+      - "@content_service"
+      - "@logger"
+
+  expedia_monolog_listener:
+    class: MainBundle\Expedia\Listener\MonologListener
+    arguments:
+      - "@logger"
+      - "@stats_collector"
+
+  sabre_bfm_service:
+    class: MainBundle\Sabre\SabreBfmService
+    arguments:
+      - "@buzz_browser"
+      - { environment: "%sabre_bfm_host%", city_code: "%sabre_bfm_city_code%", client_id: "%sabre_bfm_client_id%", client_secret: "%sabre_bfm_client_secret%" }
+      - "@sabre_monolog_listener"
+      - "@stats_collector"
+
+  sabre_monolog_listener:
+    class: MainBundle\Sabre\Listener\MonologListener
+    arguments:
+      - "@logger"
+
+  softrip_search_adapter:
+    class: MainBundle\Search\Adapter\SoftripSearchAdapter
+    arguments:
+      - "@softrip_service"
+      - "@doctrine.orm.entity_manager"
+      - "@redis_caching_service"
+      - "@softrip_translator"
+      - "@old_sound_rabbit_mq.default_rpc"
+      - "@logger"
+      - "@response_factory"
+      - "@content_service"
+
+  softrip_sabre_package_search_adapter:
+    class: MainBundle\Search\Package\Adapter\SoftripSabreSearchAdapter
+    arguments:
+      - "@doctrine.orm.entity_manager"
+      - "@response_factory"
+      - "@softrip_search_adapter"
+      - "@sabre_bfm_air_search_adapter"
+      - "@softrip_translator"
+      - "@old_sound_rabbit_mq.default_rpc"
+      - "@logger"
+
+  softrip_service:
+    class: MainBundle\Softrip\TimedSoftripService
+    arguments:
+      - "@buzz_browser"
+      - "@logger"
+      - "%softrip_host%"
+      - "%softrip_resource%"
+      - "%softrip_login%"
+      - "%softrip_password%"
+      - "@stats_collector"
+
+  softrip_translator:
+    class: MainBundle\Softrip\SoftripTranslator
+    arguments:
+      - "@doctrine.orm.entity_manager"
+
+  softrip_service_search_executor:
+    class: MainBundle\Search\SearchExecutor
+    arguments:
+      - "@softrip_search_adapter"
+
+  booking_itinerary_factory:
+      class: MainBundle\Services\Factories\Booking\ItineraryFactory
+
+  contentful_data_service:
+      class: MainBundle\Services\ContentfulDataService
+      arguments:
+        - "@markup_contentful"
+
+  content_caching_service:
+      class: MainBundle\Services\ContentCachingService
+      arguments:
+        - "@markup_contentful"
+        - "@snc_redis.default"
+
+  content_service:
+      class: MainBundle\Services\ContentService
+      arguments:
+        -  "@doctrine.orm.default_entity_manager"
+        -  "@content_caching_service"
+
+  tavisca_service:
+    class: MainBundle\Tavisca\TaviscaService
+    arguments:
+      - "@stats_collector"
+      - "@snc_redis.default"
+      - "%tavisca_credentials.host%"
+      - "%tavisca_credentials.name%"
+      - "%tavisca_credentials.cid%"
